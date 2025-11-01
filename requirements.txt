@@ -8,3 +8,14 @@ pyYAML
 requests
 groq
 openai
+asyncio
+colorama
+curl_cffi
+discord-py
+discord.py-self
+groq
+httpx
+openai
+python-dotenv
+pyYAML
+requests
