@@ -152,3 +152,15 @@ cython_debug/
 
 # Config
 config/.env
+
+# Database
+config/bot_data.db
+
+# Replit
+.pythonlibs/
+
+# Virtual Environment
+bot-env/
+venv/
+ENV/
+env/
