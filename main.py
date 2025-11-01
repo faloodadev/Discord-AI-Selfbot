@@ -166,17 +166,24 @@ async def on_ready():
             f"{Fore.RED}A new version of the AI Selfbot is available! Please update to {latest_version} at: \nhttps://github.com/Najmul190/Discord-AI-Selfbot/releases/latest{Style.RESET_ALL}\n"
         )
 
+    print(f"✨ Bot will automatically respond when:")
+    print(f"   • Mentioned (@{bot.user.name})")
+    print(f"   • Replied to")
+    print(f"   • Trigger word used: {', '.join(TRIGGER)}")
+    print(f"   • In DMs: {'Yes' if bot.allow_dm else 'No'}")
+    print(f"   • In group chats: {'Yes' if bot.allow_gc else 'No'}")
+    
     if len(bot.active_channels) > 0:
-        print("Active in the following channels:")
+        print(f"\n📌 Manually activated channels (optional):")
         for channel_id in bot.active_channels:
             channel = bot.get_channel(channel_id)
             if channel:
                 try:
-                    print(f"- #{channel.name} in {channel.guild.name}")
+                    print(f"   - #{channel.name} in {channel.guild.name}")
                 except Exception:
                     pass
     else:
-        print(f"Bot is currently not active in any channel, use {PREFIX}toggleactive command to activate it in a channel.")
+        print(f"\n💡 Tip: Use {PREFIX}toggleactive to manually activate specific channels (optional)")
 
     print(
         f"\n{Fore.LIGHTBLACK_EX}Join the Discord server for support and news on updates: https://discord.gg/yUWmzQBV4P{Style.RESET_ALL}"
@@ -224,17 +231,7 @@ def is_trigger_message(message):
         for keyword in TRIGGER
     )
 
-    if (
-        content_has_trigger
-        or mentioned
-        or replied_to
-        or is_dm
-        or is_group_dm
-        or in_conversation
-    ):
-        bot.active_conversations[conv_key] = time.time()
-
-    return (
+    should_respond = (
         content_has_trigger
         or mentioned
         or replied_to
@@ -242,6 +239,11 @@ def is_trigger_message(message):
         or is_group_dm
         or in_conversation
     )
+
+    if should_respond:
+        bot.active_conversations[conv_key] = time.time()
+
+    return should_respond
 
 
 def update_message_history(author_id, message_content):
@@ -554,16 +556,12 @@ async def process_message_queue(channel_id):
             )
             history = bot.message_history[key]
 
-            if message_to_reply_to.channel.id in bot.active_channels or (
-                isinstance(message_to_reply_to.channel, discord.DMChannel)
-                and bot.allow_dm
-            ):
-                response = await generate_response_and_reply(
-                    message_to_reply_to, combined_content, history, image_url
-                )
-                bot.message_history[key].append(
-                    {"role": "assistant", "content": response}
-                )
+            response = await generate_response_and_reply(
+                message_to_reply_to, combined_content, history, image_url
+            )
+            bot.message_history[key].append(
+                {"role": "assistant", "content": response}
+            )
 
 
 async def load_extensions():
