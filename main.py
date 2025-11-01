@@ -15,7 +15,7 @@ from utils.helpers import (
     load_instructions,
     load_config,
 )
-from utils.db import init_db, get_channels, get_ignored_users
+from utils.db import init_db, get_channels, get_ignored_users, get_blocked_users
 from utils.error_notifications import webhook_log
 from utils.mood import mood_manager, pfp_manager
 from utils.pfp_handler import handle_pfp_change
@@ -85,6 +85,7 @@ bot = commands.Bot(command_prefix=PREFIX, help_command=None, self_bot=True)
 bot.owner_id = OWNER_ID
 bot.active_channels = set(get_channels())
 bot.ignore_users = get_ignored_users()
+bot.blocked_users = get_blocked_users()
 bot.message_history = {}
 bot.paused = False
 bot.allow_dm = config["bot"]["allow_dm"]
@@ -428,6 +429,12 @@ async def on_message(message):
     batch_key = f"{user_id}-{channel_id}"
     is_followup = batch_key in bot.user_message_batches
     is_trigger = is_trigger_message(message)
+
+    if message.author.id in bot.blocked_users and message.author.id != bot.owner_id:
+        if is_trigger or message.author.id in [ref.author.id for ref in ([message.reference.resolved] if message.reference and message.reference.resolved else [])]:
+            responses = ["nah", "can't talk to you", "not talking to you rn", "my bf told me not to talk to you"]
+            await message.channel.send(random.choice(responses))
+        return
 
     if (is_trigger or (is_followup and bot.hold_conversation)) and not bot.paused:
         if user_id in bot.user_cooldowns:

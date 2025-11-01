@@ -11,6 +11,8 @@ from utils.helpers import load_instructions, load_config, resource_path
 from utils.db import (
     add_ignored_user,
     remove_ignored_user,
+    add_blocked_user,
+    remove_blocked_user,
     remove_channel,
     add_channel,
 )
@@ -82,6 +84,26 @@ class Management(commands.Cog):
                     add_ignored_user(user.id)
 
                     await ctx.send(f"Ignoring {user.name}.")
+
+        except Exception as e:
+            await ctx.send(f"Error: {e}")
+
+    @commands.command()
+    async def block(self, ctx, user: discord.User):
+        try:
+            if ctx.author.id == self.bot.owner_id:
+                if user.id in self.bot.blocked_users:
+                    self.bot.blocked_users.remove(user.id)
+
+                    remove_blocked_user(user.id)
+
+                    await ctx.send(f"Unblocked {user.name}. She can talk to them now.")
+                else:
+                    self.bot.blocked_users.append(user.id)
+
+                    add_blocked_user(user.id)
+
+                    await ctx.send(f"Blocked {user.name}. She won't talk to them.")
 
         except Exception as e:
             await ctx.send(f"Error: {e}")
