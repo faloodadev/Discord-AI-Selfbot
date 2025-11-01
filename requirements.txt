@@ -18,3 +18,13 @@ openai
 python-dotenv
 pyYAML
 requests
+colorama
+curl_cffi
+discord-py
+discord.py-self
+groq
+httpx
+openai
+python-dotenv
+pyYAML
+requests
