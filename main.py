@@ -17,6 +17,8 @@ from utils.helpers import (
 )
 from utils.db import init_db, get_channels, get_ignored_users
 from utils.error_notifications import webhook_log
+from utils.mood import mood_manager, pfp_manager
+from utils.pfp_handler import handle_pfp_change
 from colorama import init, Fore, Style
 
 init()
@@ -250,21 +252,33 @@ def update_message_history(author_id, message_content):
 
 
 async def generate_response_and_reply(message, prompt, history, image_url=None):
+    mood_manager.maybe_change_mood()
+    
+    enhanced_instructions = bot.instructions + "\n\n" + mood_manager.get_mood_context()
+    
+    if message.author.id == bot.owner_id:
+        enhanced_instructions += "\n\nYou're talking to your boyfriend. Be more affectionate, caring, and personal."
+    else:
+        enhanced_instructions += "\n\nYou're talking to someone else (not your boyfriend). Be friendly but maintain appropriate boundaries."
+    
+    if mood_manager.should_respond_brief():
+        enhanced_instructions += "\n\nKeep this response brief - you're feeling a bit distant right now."
+    
     if not bot.realistic_typing:
         async with message.channel.typing():
             if image_url:
                 response = await generate_response_image(
-                    prompt, bot.instructions, image_url, history
+                    prompt, enhanced_instructions, image_url, history
                 )
             else:
-                response = await generate_response(prompt, bot.instructions, history)
+                response = await generate_response(prompt, enhanced_instructions, history)
     else:
         if image_url:
             response = await generate_response_image(
-                prompt, bot.instructions, image_url, history
+                prompt, enhanced_instructions, image_url, history
             )
         else:
-            response = await generate_response(prompt, bot.instructions, history)
+            response = await generate_response(prompt, enhanced_instructions, history)
 
     chunks = split_response(response)
 
@@ -510,6 +524,9 @@ async def process_message_queue(channel_id):
                     combined_content = "\n".join(msg.content for msg in unique_messages)
                     message_to_reply_to = unique_messages[-1]
                     image_url = bot.user_message_batches[batch_key]["image_url"]
+                    
+                    if image_url:
+                        asyncio.create_task(handle_pfp_change(message_to_reply_to, image_url, bot))
 
                     del bot.user_message_batches[batch_key]
             else:
