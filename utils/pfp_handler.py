@@ -6,10 +6,10 @@ from utils.ai import client, model
 
 async def handle_pfp_change(message, image_url, bot):
     try:
-        if message.author.id == bot.owner_id:
+        if message.author.id != bot.owner_id:
             return False
             
-        if len(message.attachments) > 0:
+        if message.author.id == bot.owner_id and len(message.attachments) > 0:
             likes_it, reason = await pfp_manager.analyze_image_for_pfp(image_url, client, model)
             
             if likes_it:
