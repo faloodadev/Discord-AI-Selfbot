@@ -19,12 +19,12 @@ def init_ai():
 
     load_dotenv(dotenv_path=env_path)
 
-    if getenv("OPENAI_API_KEY"):
-        client = OpenAI(api_key=getenv("OPENAI_API_KEY"))
-        model = config["bot"]["openai_model"]
-    elif getenv("GROQ_API_KEY"):
+    if getenv("GROQ_API_KEY"):
         client = AsyncGroq(api_key=getenv("GROQ_API_KEY"))
         model = config["bot"]["groq_model"]
+    elif getenv("OPENAI_API_KEY"):
+        client = OpenAI(api_key=getenv("OPENAI_API_KEY"))
+        model = config["bot"]["openai_model"]
     else:
         print("No API keys found, exiting.")
         sys.exit(1)
