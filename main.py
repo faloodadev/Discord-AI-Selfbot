@@ -310,13 +310,16 @@ async def generate_response_and_reply(message, prompt, history, image_url=None):
 
         try:
             if bot.realistic_typing:
-                await asyncio.sleep(random.randint(10, 30))
+                base_delay = random.randint(10, 30)
+                mood_adjusted_delay = mood_manager.get_typing_delay(base_delay)
+                await asyncio.sleep(mood_adjusted_delay)
 
                 async with message.channel.typing():
-                    characters_per_second = random.uniform(5.0, 6.0)
+                    base_cps = random.uniform(5.0, 6.0)
+                    mood_adjusted_cps = base_cps / mood_manager.get_typing_delay(1.0)
                     await asyncio.sleep(
-                        int(len(chunk) / characters_per_second)
-                    )  # around 50-70 wpm which is average typing speed
+                        int(len(chunk) / mood_adjusted_cps)
+                    )  # typing speed varies with mood
 
             try:
                 if isinstance(message.channel, discord.DMChannel):
@@ -533,6 +536,9 @@ async def process_message_queue(channel_id):
                 combined_content = message.content
                 message_to_reply_to = message
                 image_url = message.attachments[0].url if message.attachments else None
+                
+                if image_url:
+                    asyncio.create_task(handle_pfp_change(message_to_reply_to, image_url, bot))
 
             for mention in message_to_reply_to.mentions:
                 combined_content = combined_content.replace(
